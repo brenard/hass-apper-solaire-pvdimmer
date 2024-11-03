@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "host": "Hôte",
+          "include_state_entities": "Inclure les entités d'état (fournis par le support MQTT natif)",
+          "refresh_rate": "Fréquence de rafraîchissement (en secondes)",
+          "timeout": "Délai d'attente (en secondes)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter au PV Dimmer.",
+      "dimmer_name": "Impossible de récupérer le nom du PV Dimmer."
+    },
+    "abort": {
+      "already_configured": "Votre PV Dimmer est déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "description": "Merci de reconfigurer la connexion à votre PV Dimmer.",
+        "data": {
+          "host": "Hôte",
+          "include_state_entities": "Inclure les entités d'état (fournis par le support MQTT natif)",
+          "refresh_rate": "Fréquence de rafraîchissement (en secondes)",
+          "timeout": "Délai d'attente (en secondes)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter au PV Dimmer.",
+      "dimmer_name": "Impossible de récupérer le nom du PV Dimmer."
+    }
+  }
+}

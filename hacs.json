@@ -1,0 +1,6 @@
+{
+  "name": "APPER Solaire PV Dimmer",
+  "country": ["FR"],
+  "homeassistant": "0.110.0",
+  "render_readme": true
+}

@@ -1,0 +1,14 @@
+{
+  "domain": "appersolaire_pvdimmer",
+  "name": "APPER Solaire PV Dimmer",
+  "codeowners": ["@brenard"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/brenard/hass-apper-solaire-pvdimmer",
+  "homekit": {},
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/brenard/hass-apper-solaire-pvdimmer/issues",
+  "ssdp": [],
+  "version": "0.1",
+  "zeroconf": []
+}
