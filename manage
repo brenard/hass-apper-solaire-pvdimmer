@@ -14,7 +14,7 @@ case $ACTION in
     [ ! -d "$CONFIG_DIR" ] && mkdir "$CONFIG_DIR"
     docker create \
       --name "$NAME" \
-      --privileged --restart=unless-stopped \
+      --privileged --restart=no \
       -e TZ="$( cat /etc/timezone )" \
       -v "$CONFIG_DIR:/config" \
       -v "$SRC_DIR/custom_components:/config/custom_components" \
