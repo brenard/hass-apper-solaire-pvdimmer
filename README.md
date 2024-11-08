@@ -59,5 +59,4 @@ the `./manage logs` command.
 
 ## Roadmap
 
-- Add backup/restore PV Dimmer configuration (useful when upgrading it)
 - Manually trigger an exceptional heating cycle (by temporarily modifying the timer parameter)

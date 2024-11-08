@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
-from datetime import timedelta
+import os.path
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -38,6 +40,11 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
         )
         self.entry = entry
         self._session = async_create_clientsession(self.hass)
+        self._backup_path = os.path.join(
+            hass.config.path(),
+            "_".join([DOMAIN, self.dimmer_mac_address.replace(":", ""), "config.json"]),
+        )
+        self._last_backup = None
 
     async def async_request(self, path: str, **kwargs: Any) -> Any:
         """Request url with method."""
@@ -78,6 +85,8 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict[str, dict[str, Any]]:
         """Fetch data."""
+        if not self._last_backup and os.path.exists(self._backup_path):
+            await self.hass.async_add_executor_job(self._load_backup)
         try:
             data = await self.async_get_data()
         except Exception as error:
@@ -86,13 +95,15 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
 
         return data
 
-    def get_item(self, key_chain: str, default: Any = None) -> Any:
+    def get_item(
+        self, key_chain: str, default: Any = None, data: dict[str, Any] | None = None
+    ) -> Any:
         """
         Get recursive key and return value.
 
         :param key: The excepted item key chain (with dot for key delimited, ex: "key.key.key")
         """
-        data = self.data
+        data = data or self.data
         if (keys := key_chain.split(".")) and isinstance(keys, list):
             for key in keys:
                 if isinstance(data, dict):
@@ -115,3 +126,148 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
         if not self._dimmer_mac_address:
             self._dimmer_mac_address = getmacbyip(self.entry.data[CONF_HOST])
         return self._dimmer_mac_address
+
+    #
+    # Backup/restore configuration stuff
+    #
+
+    def _load_backup(self):
+        """
+        Load configuration backup and store it in self._last_backup
+
+        Note: need to be run using hass.async_add_executor_job() helper since its contain
+        I/O locking calls.
+        """
+        _LOGGER.debug("Load last backup from %s", self._backup_path)
+        try:
+            with open(self._backup_path, encoding="utf8") as fd:
+                self._last_backup = json.load(fd)
+                self._last_backup["time"] = datetime.fromisoformat(self._last_backup["time"])
+        except (OSError, ValueError):
+            _LOGGER.exception("Failed to load last backup from %s", self._backup_path)
+            self._last_backup = None
+
+    def _save_backup(self, data):
+        """
+        Save configuration backup
+
+        Note: need to be run using hass.async_add_executor_job() helper since its contain
+        I/O locking calls.
+        """
+        try:
+            with open(self._backup_path, "w", encoding="utf8") as fd:
+                json.dump(
+                    data, fd, default=lambda x: x.isoformat() if isinstance(x, datetime) else x
+                )
+            _LOGGER.debug("PV dimmer configuration backup in %s", self._backup_path)
+        except Exception:
+            _LOGGER.exception("Failed to backup configuration in %s", self._backup_path)
+            if os.path.exists(self._backup_path):
+                os.remove(self._backup_path)
+
+    async def async_backup_device(self):
+        """Backup PV dimmer configuration"""
+        data = {
+            "data": await self.async_get_data(),
+            "time": datetime.now(),
+        }
+        await self.hass.async_add_executor_job(self._save_backup, data)
+        self._last_backup = data
+
+    async def async_restore_device(self):
+        """Restore PV dimmer configuration"""
+        assert self._last_backup, "No available backup to restore"
+        _LOGGER.debug(
+            "Restore PV dimmer configuration from last backup (%s): %s",
+            self._last_backup["time"],
+            self._last_backup["data"],
+        )
+
+        restore_calls = [
+            {
+                "title": "General configuration",
+                "path": "get",
+                "data": {
+                    "maxtemp": "general.maxtemp",
+                    "startingpow": "general.startingpow",
+                    "minpow": "general.minpow",
+                    "maxpow": "general.maxpow",
+                    "child": "general.child",
+                    "SubscribePV": "general.SubscribePV",
+                    "SubscribeTEMP": "general.SubscribeTEMP",
+                    "mode": "general.delester",
+                    "charge1": "general.charge1",
+                    "charge2": "general.charge2",
+                    "charge3": "general.charge3",
+                    "DALLAS": "general.DALLAS",
+                    "dimmername": "general.dimmername",
+                    "trigger": "general.trigger",
+                },
+            },
+            {
+                "title": "MQTT configuration",
+                "path": "get",
+                "data": {
+                    "hostname": "mqtt.server",
+                    "port": "mqtt.port",
+                    "Publish": "mqtt.topic",
+                    "mqttuser": "mqtt.user",
+                    "mqttpassword": "mqtt.password",
+                    "idxtemp": "mqtt.idxtemp",
+                    "IDXAlarme": "mqtt.IDXAlarme",
+                    "IDX": "mqtt.IDX",
+                },
+            },
+            {
+                "title": "Dimmer timer configuration",
+                "path": "setminuteur",
+                "data": {
+                    "dimmer": "",
+                    "heure_demarrage": "dimmer_timer.heure_demarrage",
+                    "heure_arret": "dimmer_timer.heure_arret",
+                    "temperature": "dimmer_timer.temperature",
+                    "puissance": "dimmer_timer.puissance",
+                },
+            },
+            {
+                "title": "Relay 1 timer configuration",
+                "path": "setminuteur",
+                "data": {
+                    "relay1": "",
+                    "heure_demarrage": "relay1_timer.heure_demarrage",
+                    "heure_arret": "relay1_timer.heure_arret",
+                    "temperature": "relay1_timer.temperature",
+                    "puissance": "relay1_timer.puissance",
+                },
+            },
+            {
+                "title": "Relay 2 timer configuration",
+                "path": "setminuteur",
+                "data": {
+                    "relay2": "",
+                    "heure_demarrage": "relay2_timer.heure_demarrage",
+                    "heure_arret": "relay2_timer.heure_arret",
+                    "temperature": "relay2_timer.temperature",
+                    "puissance": "relay2_timer.puissance",
+                },
+            },
+        ]
+
+        for call in restore_calls:
+            params = {}
+            for dst, src in call["data"].items():
+                value = self.get_item(src, None, self._last_backup["data"])
+                if value is not None:
+                    params[dst] = value
+
+            if not params:
+                _LOGGER.warning("No %s to restore", call["title"])
+                continue
+            _LOGGER.debug("Restoring %s...", call["title"])
+            await self.async_request(call["path"], params=params)
+            _LOGGER.debug("%s restored", call["title"])
+
+    @property
+    def last_backup(self):
+        """Return last device backup time"""
+        return self._last_backup["time"] if self._last_backup else None

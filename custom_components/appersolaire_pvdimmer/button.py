@@ -43,6 +43,30 @@ class ResetWifiSettingButton(PVDimmerEntity, ButtonEntity):
         await self.coordinator.async_request("resetwifi", json_decode=False)
 
 
+class BackupButton(PVDimmerEntity, ButtonEntity):
+    """Representation of a button for backuping APPER Solaire PV Dimmer configuration."""
+
+    async def async_press(self) -> None:
+        """Handle the button press."""
+        await self.coordinator.async_backup_device()
+        self.async_write_ha_state()
+
+    @property
+    def extra_state_attributes(self):
+        """Return extra attributes."""
+        return {
+            "last_backup": self.coordinator.last_backup,
+        }
+
+
+class RestoreButton(PVDimmerEntity, ButtonEntity):
+    """Representation of a button for restoring APPER Solaire PV Dimmer configuration."""
+
+    async def async_press(self) -> None:
+        """Handle the button press."""
+        await self.coordinator.async_restore_device()
+
+
 ENTITIES: tuple[PVDimmerButtonEntityDescription, ...] = (
     PVDimmerButtonEntityDescription(
         object_class=RestartButton, key="restart", name="Restart", icon="mdi:restart-alert"
@@ -55,6 +79,18 @@ ENTITIES: tuple[PVDimmerButtonEntityDescription, ...] = (
         key="resetwifi",
         name="Reset WIFI settings",
         icon="mdi:wifi-cog",
+    ),
+    PVDimmerButtonEntityDescription(
+        object_class=BackupButton,
+        key="backup_config",
+        name="Backup configuration",
+        icon="mdi:briefcase-download",
+    ),
+    PVDimmerButtonEntityDescription(
+        object_class=RestoreButton,
+        key="restore_config",
+        name="Restore configuration",
+        icon="mdi:briefcase-upload",
     ),
 )
 
