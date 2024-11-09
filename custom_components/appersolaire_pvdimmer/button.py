@@ -19,6 +19,14 @@ class PVDimmerButtonEntityDescription(PVDimmerEntityDescription, ButtonEntityDes
     """Describes a APPER Solaire PV Dimmer's button entity."""
 
 
+class SaveConfigButton(PVDimmerEntity, ButtonEntity):
+    """Representation of a button for saving configuration of APPER Solaire PV Dimmer to its flash memory."""
+
+    async def async_press(self) -> None:
+        """Handle the button press."""
+        await self.coordinator.async_save_config()
+
+
 class RestartButton(PVDimmerEntity, ButtonEntity):
     """Representation of a button for reboot APPER Solaire PV Dimmer."""
 
@@ -68,6 +76,12 @@ class RestoreButton(PVDimmerEntity, ButtonEntity):
 
 
 ENTITIES: tuple[PVDimmerButtonEntityDescription, ...] = (
+    PVDimmerButtonEntityDescription(
+        object_class=SaveConfigButton,
+        key="save_config",
+        name="Save configuration",
+        icon="mdi:content-save-settings",
+    ),
     PVDimmerButtonEntityDescription(
         object_class=RestartButton, key="restart", name="Restart", icon="mdi:restart-alert"
     ),

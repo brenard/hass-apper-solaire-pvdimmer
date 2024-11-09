@@ -83,6 +83,10 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
         """Set APPER Solaire PV Dimmer config keys"""
         return await self.async_request("get", params=kwargs)
 
+    async def async_save_config(self):
+        """Save APPER Solaire PV Dimmer configuration to its flash memory"""
+        return await self.async_request("get", params={"save": "yes"})
+
     async def _async_update_data(self) -> dict[str, dict[str, Any]]:
         """Fetch data."""
         if not self._last_backup and os.path.exists(self._backup_path):
