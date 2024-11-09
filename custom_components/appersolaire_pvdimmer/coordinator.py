@@ -270,6 +270,7 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug("Restoring %s...", call["title"])
             await self.async_request(call["path"], params=params)
             _LOGGER.debug("%s restored", call["title"])
+        await self.async_save_config()
 
     @property
     def last_backup(self):
