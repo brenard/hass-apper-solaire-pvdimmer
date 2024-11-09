@@ -73,6 +73,12 @@ STATE_ENTITIES: tuple[PVDimmerSensorEntityDescription, ...] = (
         icon="mdi:alert-circle",
         cast_fn=lambda x: x if x else "No problem",
     ),
+    PVDimmerSensorEntityDescription(
+        key="last_backup",
+        name="Last backup",
+        icon="mdi:archive-clock-outline",
+        value_fn=lambda self: self.coordinator.last_backup,
+    ),
 )
 
 

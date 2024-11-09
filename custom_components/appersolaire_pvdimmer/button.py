@@ -57,6 +57,7 @@ class BackupButton(PVDimmerEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Handle the button press."""
         await self.coordinator.async_backup_device()
+        # Update entity state to update last_backup extra attribute
         self.async_write_ha_state()
 
     @property

@@ -150,6 +150,7 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
         except (OSError, ValueError):
             _LOGGER.exception("Failed to load last backup from %s", self._backup_path)
             self._last_backup = None
+        self.update_last_backup_sensor_entity_state()
 
     def _save_backup(self, data):
         """
@@ -177,6 +178,13 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
         }
         await self.hass.async_add_executor_job(self._save_backup, data)
         self._last_backup = data
+        self.update_last_backup_sensor_entity_state()
+
+    def update_last_backup_sensor_entity_state(self):
+        """Update last_backup sensor entity state"""
+        for update_callback, _ in list(self._listeners.values()):
+            if "last_backup" in update_callback.__self__.unique_id:
+                update_callback()
 
     async def async_restore_device(self):
         """Restore PV dimmer configuration"""
