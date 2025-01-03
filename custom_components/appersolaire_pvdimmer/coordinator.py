@@ -233,8 +233,10 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
             {
                 "title": "Dimmer timer configuration",
                 "path": "setminuteur",
-                "data": {
+                "params": {
                     "dimmer": "",
+                },
+                "data": {
                     "heure_demarrage": "dimmer_timer.heure_demarrage",
                     "heure_arret": "dimmer_timer.heure_arret",
                     "temperature": "dimmer_timer.temperature",
@@ -244,8 +246,10 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
             {
                 "title": "Relay 1 timer configuration",
                 "path": "setminuteur",
-                "data": {
+                "params": {
                     "relay1": "",
+                },
+                "data": {
                     "heure_demarrage": "relay1_timer.heure_demarrage",
                     "heure_arret": "relay1_timer.heure_arret",
                     "temperature": "relay1_timer.temperature",
@@ -255,8 +259,10 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
             {
                 "title": "Relay 2 timer configuration",
                 "path": "setminuteur",
-                "data": {
+                "params": {
                     "relay2": "",
+                },
+                "data": {
                     "heure_demarrage": "relay2_timer.heure_demarrage",
                     "heure_arret": "relay2_timer.heure_arret",
                     "temperature": "relay2_timer.temperature",
@@ -266,7 +272,7 @@ class PVDimmerDataUpdateCoordinator(DataUpdateCoordinator):
         ]
 
         for call in restore_calls:
-            params = {}
+            params = call.get("params", {})
             for dst, src in call["data"].items():
                 value = self.get_item(src, None, self._last_backup["data"])
                 if value is not None:
